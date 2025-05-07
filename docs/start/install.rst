@@ -12,75 +12,83 @@ verl supports various backends. Currently, the following configurations are avai
 - **FSDP** and **Megatron-LM** (optional) for training.
 - **SGLang**, **vLLM** and **TGI** for rollout generation.
 
-Training backends
-------------------
+Choices of Backend Engines
+----------------------------
+
+1. Training:
 
 We recommend using **FSDP** backend to investigate, research and prototype different models, datasets and RL algorithms. The guide for using FSDP backend can be found in :doc:`FSDP Workers<../workers/fsdp_workers>`.
 
-For users who pursue better scalability, we recommend using **Megatron-LM** backend. Currently, we support Megatron-LM v0.11 [1]_. The guide for using Megatron-LM backend can be found in :doc:`Megatron-LM Workers<../workers/megatron_workers>`.
+For users who pursue better scalability, we recommend using **Megatron-LM** backend. Currently, we support `Megatron-LM v0.11 <https://github.com/NVIDIA/Megatron-LM/tree/v0.11.0>`_. The guide for using Megatron-LM backend can be found in :doc:`Megatron-LM Workers<../workers/megatron_workers>`.
+
+.. note:: 
+
+    verl directly supports megatron's `GPTModel` API on the main branch with mcore v0.11. For mcore v0.4 try `0.3.x branch <https://github.com/volcengine/verl/tree/v0.3.x>`_ instead.
+
+2. Inference:
+
+For inference, vllm 0.6.3 and 0.8.2 have been tested for stability. Avoid using vllm 0.7x due to reported issues with its functionality.
+
+For SGLang, refer to the :doc:`SGLang Backend<../workers/sglang_worker>` for detailed installation and usage instructions. **SGLang offers better throughput and is under extensive development.** We encourage users to report any issues or provide feedback via the `SGLang Issue Tracker <https://github.com/zhaochenyang20/Awesome-ML-SYS-Tutorial/issues/106>`_.
+
+For huggingface TGI integration, it is usually used for debugging and single GPU exploration.
 
 Install from docker image
 -------------------------
 
-We provide pre-built Docker images for quick setup. For SGLang usage, please follow the later sections in this doc.
+We provide pre-built Docker images for quick setup.
 
-Image and tag: ``whatcanyousee/verl:vemlp-th2.4.0-cu124-vllm0.6.3-ray2.10-te2.0-megatron0.11.0-v0.0.6``. See files under ``docker/`` for NGC-based image or if you want to build your own.
+For vLLM with Megatron or FSDP, please use ``whatcanyousee/verl:ngc-cu124-vllm0.8.3-sglang0.4.5-mcore0.12.0-te2.2``.
 
-1. Launch the desired Docker image:
+For latest vLLM with FSDP, please refer to ``hiyouga/verl:ngc-th2.6.0-cu126-vllm0.8.4-flashinfer0.2.2-cxx11abi0``.
+
+For SGLang with FSDP, please use ``ocss884/verl-sglang:ngc-th2.6.0-cu126-sglang0.4.6.post1`` which is provided by SGLang RL Group.
+
+See files under ``docker/`` for NGC-based image or if you want to build your own.
+
+1. Launch the desired Docker image and attach into it:
 
 .. code:: bash
 
-    docker run --runtime=nvidia -it --rm --shm-size="10g" --cap-add=SYS_ADMIN -v <image:tag>
+    docker create --runtime=nvidia --gpus all --net=host --shm-size="10g" --cap-add=SYS_ADMIN -v .:/workspace/verl --name verl <image:tag>
+    docker start verl
+    docker exec -it verl bash
 
 
-2.	Inside the container, install verl:
+2.	Inside the container, install latest verl:
 
 .. code:: bash
 
     # install the nightly version (recommended)
-    git clone https://github.com/volcengine/verl && cd verl && pip3 install -e .
-    # or install from pypi via `pip3 install verl`
+    git clone https://github.com/volcengine/verl && cd verl
+    # pick your choice of inference engine: vllm or sglang
+    # pip3 install -e .[vllm]
+    # pip3 install -e .[sglang]
+    # or install from pypi instead of git via:
+    # pip3 install verl[vllm]
+    # pip3 install verl[sglang]
 
 .. note::
     
-    The Docker image is built with the following configurations:
+    The Docker image ``whatcanyousee/verl:ngc-cu124-vllm0.8.3-sglang0.4.5-mcore0.12.0-te2.2`` is built with the following configurations:
 
-    - **PyTorch**: 2.4.0+cu124
+    - **PyTorch**: 2.6.0+cu124
     - **CUDA**: 12.4
-    - **Megatron-LM**: core_r0.11.0
-    - **vLLM**: 0.6.3
-    - **Ray**: 2.10.0
-    - **TransformerEngine**: 2.0.0+754d2a0
-
-    Now verl has been **compatible to Megatron-LM core_r0.11.0**, and there is **no need to apply patches** to Megatron-LM. Also, the image has integrated **Megatron-LM core_r0.11.0**, located at ``/opt/nvidia/Meagtron-LM``. One more thing, because verl only use ``megatron.core`` module for now, there is **no need to modify** ``PATH`` if you have installed Megatron-LM with this docker image.
-
-
-Install verl-SGLang from scratch
--------------------------------------
-
-SGLang has largely support the rearch and inference workload at xAI. For verl-sglang installation, ignore the version conflicts reported by pip with vllm. And, SGLang support native API for RLHF, do not need to patch a single line of code.
-
-The following steps are quick installation guide for verl-SGLang.
-
-.. code:: bash
-
-    # Create a virtual environment and use uv for quick installation
-    python3 -m venv ~/.python/verl-sglang && source ~/.python/verl-sglang/bin/activate
-    python3 -m pip install --upgrade pip && python3 -m pip install --upgrade uv
-
-    # Install verl-SGLang
-    git clone https://github.com/volcengine/verl verl-sglang && cd verl-sglang
-    python3 -m uv pip install .
-    
-    # Install the latest stable version of sglang with verl support, currently, the latest version is 0.4.3.post3
-    # For SGLang installation, you can also refer to https://docs.sglang.ai/start/install.html
-    python3 -m uv pip install "sglang[all]==0.4.4.post1" --find-links https://flashinfer.ai/whl/cu124/torch2.5/flashinfer-python
+    - **cuDNN**: 9.8.0
+    - **nvidia-cudnn-cu12**: 9.8.0.87, **important for the usage of Megatron FusedAttention with MLA Support**
+    - **Flash Attenttion**: 2.7.4.post1
+    - **Flash Infer**: 0.2.2.post1
+    - **vLLM**: 0.8.3
+    - **SGLang**: 0.4.5.post3
+    - **Megatron-LM**: v0.11.0
+    - **TransformerEngine**: 2.2.0
+    - **Ray**: 2.44.1
 
 
 Install from custom environment
 ---------------------------------------------
 
-To manage environment, we recommend using conda:
+If you do not want to use the official docker image, here is how to start from your own environment. To manage environment, we recommend using conda:
 
 .. code:: bash
 
@@ -94,11 +102,13 @@ own post-training jobs.
 .. code:: bash
 
    # install verl together with some lightweight dependencies in setup.py
-   pip3 install torch==2.4.0 --index-url https://download.pytorch.org/whl/cu124
+   pip3 install torch torchvision
    pip3 install flash-attn --no-build-isolation
    git clone https://github.com/volcengine/verl.git
    cd verl
-   pip3 install -e .
+   # pick your choice of inference engine: vllm or sglang
+   # pip3 install -e .[vllm]
+   # pip3 install -e .[sglang]
 
 
 Megatron is optional. It's dependencies can be setup as below:
@@ -110,15 +120,10 @@ Megatron is optional. It's dependencies can be setup as below:
        git+https://github.com/NVIDIA/apex
 
    # transformer engine
-   pip3 install git+https://github.com/NVIDIA/TransformerEngine.git@stable
+   pip3 install --no-deps git+https://github.com/NVIDIA/TransformerEngine.git@v2.2
+   # megatron core
+   pip3 install --no-deps megatron-core==0.12.0
 
-   git clone -b v0.11.0 https://github.com/NVIDIA/Megatron-LM
-   cd Megatron-LM
-   pip3 install -e .
-   
-   # megatron core v0.4.0: clone and apply the patch
-   # You can also get the patched Megatron code patch via
-   # git clone -b core_v0.4.0_verl https://github.com/eric-haibin-lin/Megatron-LM
 
 Install with AMD GPUs - ROCM kernel support
 ------------------------------------------------------------------
@@ -165,6 +170,7 @@ Find the docker for AMD ROCm: `docker/Dockerfile.rocm <https://github.com/volcen
         liger-kernel \
         numpy \
         pandas \
+        datasets \
         peft \
         "pyarrow>=15.0.0" \
         pylatexenc \
@@ -206,4 +212,4 @@ Launch the container
 (Optional): If you do not want to root mode and require assign yuorself as the user
 Please add ``-e HOST_UID=$(id -u)`` and ``-e HOST_GID=$(id -g)`` into the above docker launch script. 
 
-(Currently Support): Training Engine: FSDP; Inference Engine: vLLM - We will support Megatron and SGLang in the future.
+(Currently Support): Training Engine: FSDP; Inference Engine: vLLM and SGLang - We will support Megatron in the future.
