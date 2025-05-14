@@ -59,7 +59,7 @@ def make_map_fn(split: str):
             answer = answer[0]
 
         data = {
-            "data_source": "openai/gsm8k",
+            "data_source": "",
             "prompt": [{
                 "role": "user",
                 "content": question
@@ -80,7 +80,7 @@ def make_map_fn(split: str):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Process datasets for DeepScaler training')
-    parser.add_argument('--jsonl_path', default=os.path.expanduser('./data/boba_106k_0319.jsonl'),
+    parser.add_argument('--jsonl_path', default=os.path.expanduser('./data/7B_math_only.jsonl'),
                        help='Local directory to save processed datasets')
     parser.add_argument('--local_dir', default=os.path.expanduser('./data'),
                        help='Local directory to save processed datasets')

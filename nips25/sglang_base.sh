@@ -52,4 +52,4 @@ python3 -m verl.trainer.main_ppo \
     trainer.nnodes={nnodes} \
     trainer.save_freq=-1 \
     trainer.test_freq=-1 \
-    trainer.total_training_steps=20 $@
+    trainer.total_training_steps=4 $@

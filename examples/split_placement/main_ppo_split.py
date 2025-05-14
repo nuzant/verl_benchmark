@@ -50,9 +50,8 @@ class RewardManager:
 
         already_print_data_sources = {}
 
-        for i in range(len(data)):
-            data_item = data[i]  # DataProtoItem
-
+        @ray.remote(num_cpus=1)
+        def compute_one_reward(data_item):
             prompt_ids = data_item.batch["prompts"]
 
             prompt_length = prompt_ids.shape[-1]
@@ -75,14 +74,37 @@ class RewardManager:
             compute_score_fn = _select_rm_score_fn(data_source)
 
             score = compute_score_fn(solution_str=sequences_str, ground_truth=ground_truth)
-            reward_tensor[i, valid_response_length - 1] = score
+            return score
 
-            if data_source not in already_print_data_sources:
-                already_print_data_sources[data_source] = 0
+            # if data_source not in already_print_data_sources:
+            #     already_print_data_sources[data_source] = 0
 
-            if already_print_data_sources[data_source] < self.num_examine:
-                already_print_data_sources[data_source] += 1
-                print(sequences_str)
+            # if already_print_data_sources[data_source] < self.num_examine:
+            #     already_print_data_sources[data_source] += 1
+            #     print(sequences_str)
+        
+        futures = [compute_one_reward.remote(data_item) for data_item in data]
+        resp_length = []
+        for data_item in data:
+            prompt_ids = data_item.batch["prompts"]
+
+            prompt_length = prompt_ids.shape[-1]
+
+            valid_prompt_length = data_item.batch["attention_mask"][:prompt_length].sum()
+            valid_prompt_ids = prompt_ids[-valid_prompt_length:]
+
+            response_ids = data_item.batch["responses"]
+            valid_response_length = data_item.batch["attention_mask"][prompt_length:].sum()
+            valid_response_ids = response_ids[:valid_response_length]
+            resp_length.append(valid_response_length)
+
+        import time
+        st = time.monotonic()
+        scores = [ray.get(future) for future in futures]
+
+        for i, score in enumerate(scores):
+            reward_tensor[i, resp_length[i] - 1] = score
+        et = time.monotonic() - st
 
         if return_dict:
             return {"reward_tensor": reward_tensor}

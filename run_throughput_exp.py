@@ -1,17 +1,20 @@
 import os
+import itertools
+import argparse
+import subprocess
 
-batch_size = 128
-rollout_n = 8
+batch_size = 512
+rollout_n = 16
 
-nnodes_range = [4]
-model_size_range = ["1.5B"]
-rollout_backend_range = ["sglang", "vllm"]
-max_response_length_range = ["8192"]
+nnodes_range = [4, 8, 16, 32]
+model_size_range = ["1.5B", "7B", "14B", "32B"]
+# rollout_backend_range = ["vllm"]
+max_response_length_range = [8192, 16384, 32768]
 
 VERL_SCRIPT_PATH = "./nips25/"
 VERL_VLLM_BASE = "./nips25/vllm_base.sh"
 VERL_SGLANG_BASE = "./nips25/sglang_base.sh"
-SBATCH_SCRIPT_PATH = "./"
+SBATCH_SCRIPT_PATH = "./sbatch_scripts/"
 SBATCH_VLLM_BASE = "./sbatch_run_ray_base_vllm.sh"
 SBATCH_SGLANG_BASE = "./sbatch_run_ray_base_sglang.sh"
 
@@ -25,7 +28,7 @@ def generate_verl_script(
     model_size,
     rollout_backend,
     max_response_length,
-    max_prompt_length=512,
+    max_prompt_length=1024,
     ppo_mini_batch_size=None,
     ppo_max_token_len_per_gpu=32768,
     ulysses_sequence_parallel_size=1,
@@ -34,6 +37,8 @@ def generate_verl_script(
 ):
     if ppo_mini_batch_size is None:
         ppo_mini_batch_size = batch_size
+    if ppo_max_token_len_per_gpu < max_prompt_length + max_response_length:
+        ppo_max_token_len_per_gpu = max_prompt_length + max_response_length
     
     if rollout_backend == "vllm":
         verl_base = VERL_VLLM_BASE
@@ -110,18 +115,30 @@ def generate_verl_script(
         print(sbatch_script_content)
         f.write(sbatch_script_content)
     print("\n")
+    return sbatch_script_path
 
+parser = argparse.ArgumentParser()
+parser.add_argument("--dry-run", action="store_true")
 
-nnodes_range = [4]
-model_size_range = ["1.5B"]
-rollout_backend_range = ["sglang", "vllm"]
-max_response_length_range = ["8192"]
+args = parser.parse_args()
 
-generate_verl_script(
-    batch_size=batch_size,
-    rollout_n=rollout_n,
-    nnodes=nnodes_range[0],
-    model_size=model_size_range[0],
-    rollout_backend="sglang",
-    max_response_length=max_response_length_range[0],
-)
+for n_nodes, model_size, max_response_length in itertools.product(
+    nnodes_range, model_size_range, max_response_length_range
+):
+    path = generate_verl_script(
+        batch_size=batch_size,
+        rollout_n=rollout_n,
+        nnodes=n_nodes,
+        model_size=model_size,
+        rollout_backend="vllm",
+        max_response_length=max_response_length,
+    )
+    if not args.dry_run:
+        r = subprocess.run(f"bash ./run_exp.sh {path}", shell=True)
+        # Check the return code
+        if r.returncode == 0:
+            print(f"Command \'bash ./run_exp.sh {path}\' executed successfully:")
+            print(r.stdout)
+        else:
+            print(f"Command \'bash ./run_exp.sh {path}\' failed with error code: {r.returncode}")
+            print(r.stderr)
