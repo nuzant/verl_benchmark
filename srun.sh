@@ -22,7 +22,7 @@ container_envs="--env PYTHONPATH=$workdir \
     --env NCCL_SET_THREAD_NAME=1 \
     --env NCCL_DEBUG_SUBSYS=INIT,TUNING,GRAPH"
 
-srun --mpi=pmi2 -K --chdir $workdir --nodes=1 --ntasks=1 \
+srun --mpi=pmi2 -K --chdir $workdir --nodes=1 -w slurmd-57 --ntasks=1 \
     --gres=gpu:8 --cpus-per-task=128 --mem-per-cpu=8G --pty \
     singularity run --nv --writable-tmpfs --no-home \
     $container_envs \

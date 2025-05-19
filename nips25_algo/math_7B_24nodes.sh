@@ -51,6 +51,7 @@ python3 -m verl.trainer.main_ppo \
     trainer.logger=['console','wandb'] \
     trainer.project_name='verl-grpo-algo' \
     trainer.experiment_name='verl-grpo-fsdp+sglang-math-7b-24nodes-528x16-27k-trial0' \
+    trainer.resume_mode=auto \
     trainer.val_before_train=False \
     trainer.n_gpus_per_node=8 \
     trainer.nnodes=24 \

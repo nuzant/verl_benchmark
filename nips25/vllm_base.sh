@@ -41,6 +41,7 @@ python3 -m verl.trainer.main_ppo \
     actor_rollout_ref.rollout.chat_scheduler=$chat_scheduler \
     actor_rollout_ref.rollout.gpu_memory_utilization={rollout_gpu_memory_utilization} \
     actor_rollout_ref.rollout.n={rollout_n} \
+    actor_rollout_ref.rollout.enable_chunked_prefill=False \
     actor_rollout_ref.ref.fsdp_config.param_offload=True \
     algorithm.use_kl_in_reward=False \
     trainer.critic_warmup=0 \
@@ -49,7 +50,7 @@ python3 -m verl.trainer.main_ppo \
     trainer.experiment_name='test-vllm-fsdp' \
     trainer.val_before_train=False \
     trainer.n_gpus_per_node=8 \
-    trainer.nnodes={nnodes}\ \
+    trainer.nnodes={nnodes} \
     trainer.save_freq=-1 \
     trainer.test_freq=-1 \
     trainer.total_training_steps=4 $@

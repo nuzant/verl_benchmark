@@ -3,9 +3,9 @@
 #SBATCH --nodes=16
 #SBATCH --ntasks-per-node=1
 #SBATCH --gres=gpu:8
-#SBATCH --cpus-per-task=128
+#SBATCH --cpus-per-task=120
 #SBATCH --mem-per-cpu=10G
-#SBATCH --exclude=slurmd-20
+#SBATCH --exclude=slurmd-[20,40,63,78,88,94]
 #SBATCH --output=/storage/openpsi/users/meizhiyu.mzy/nips25/logs/%j-verl-vllm-1.5B-n16-ctx32768-512x16.out
 #SBATCH --open-mode=append
 #SBATCH --no-requeue
@@ -63,7 +63,7 @@ container_envs="--env CUDA_HOME=/usr/local/cuda \
 
 echo "Starting HEAD at $head_node"
 srun --mpi=pmi2 -K -l --chdir $workdir --nodes=1 --ntasks=1 \
-    --gres=gpu:8 --cpus-per-task=128 --mem-per-cpu=8G -w "$head_node" \
+    --gres=gpu:8 --cpus-per-task=120 --mem-per-cpu=8G -w "$head_node" \
     singularity run --nv --writable-tmpfs --no-home \
     $container_envs \
     --bind /storage:/storage $apptainer_image_path \
@@ -79,7 +79,7 @@ for ((i = 1; i <= worker_num; i++)); do
     node_i=${nodes_array[$i]}
     echo "Starting WORKER $i at $node_i"
     srun --mpi=pmi2 -K -l --chdir $workdir --nodes=1 --ntasks=1 \
-        --gres=gpu:8 --cpus-per-task=128 --mem-per-cpu=8G -w "$node_i" \
+        --gres=gpu:8 --cpus-per-task=120 --mem-per-cpu=8G -w "$node_i" \
         singularity run --nv --writable-tmpfs --no-home \
         $container_envs \
         --bind /storage:/storage $apptainer_image_path \

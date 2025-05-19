@@ -48,10 +48,10 @@ def compute_math_rw(data_source, solution_str, ground_truth, extra_info=None):
         )
         label = 0
     finally:
-        if os.path.exists(f"/tmp/{tmp_id}-input.jsonl"):
-            os.remove(f"/tmp/{tmp_id}-input.jsonl")
-        if os.path.exists(f"/tmp/{tmp_id}-output.jsonl"):
-            os.remove(f"/tmp/{tmp_id}-output.jsonl")
+        # if os.path.exists(f"/tmp/{tmp_id}-input.jsonl"):
+        #     os.remove(f"/tmp/{tmp_id}-input.jsonl")
+        # if os.path.exists(f"/tmp/{tmp_id}-output.jsonl"):
+        #     os.remove(f"/tmp/{tmp_id}-output.jsonl")
         print(f" >>> Reward = {label}")
         return label
     # print(f"in math rw, {solution_str} {ground_truth}")

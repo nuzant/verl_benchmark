@@ -5,8 +5,8 @@
 #SBATCH --gres=gpu:8
 #SBATCH --cpus-per-task=128
 #SBATCH --mem-per-cpu=10G
-#SBATCH --exclude=slurmd-20
-#SBATCH --output=/storage/openpsi/users/meizhiyu.mzy/nips25/logs/%j-verl-sglang-32B-n4-ctx8192-512x16.out
+#SBATCH --exclude=slurmd-[20,40,94]
+#SBATCH --output=/storage/openpsi/users/meizhiyu.mzy/nips25/logs/%j-verl-sglang-32B-n4-ctx8192-512x16-2025051400.out
 #SBATCH --open-mode=append
 #SBATCH --no-requeue
 
