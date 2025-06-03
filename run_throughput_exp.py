@@ -3,14 +3,14 @@ import itertools
 import argparse
 import subprocess
 
-batch_size = 768
+batch_size = 512
 rollout_n = 16
 
-nnodes_range = [48]
-# model_size_range = ["1.5B", "7B", "14B", "32B"]
-model_size_range = ["32B"]
+nnodes_range = [4, 8, 16, 32, 64]
+model_size_range = ["1.5B", "7B", "14B", "32B"]
+# model_size_range = ["32B"]
+rollout_backend_range = ["vllm", "sglang"]
 # rollout_backend_range = ["vllm", "sglang"]
-rollout_backend_range = ["vllm"]
 max_response_length_range = [8192, 16384, 32768]
 
 VERL_SCRIPT_PATH = "./nips25/"
