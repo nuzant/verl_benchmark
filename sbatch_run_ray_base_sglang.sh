@@ -105,4 +105,4 @@ for ((i = 0; i <= worker_num; i++)); do
             ray stop &
 done
 
-sleep 10
+wait

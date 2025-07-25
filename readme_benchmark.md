@@ -10,7 +10,7 @@ Docker images:
 
 # Generating scripts
 
-To generate verl scripts (in ./nips25/) and sbatch scripts for slurm (in ./sbatch_scripts/), you could change the model, image, and working directory to paths in your own filesystem in `./nips25/[sglang/vllm]_base.sh` and `./sbatch_run_ray_base_[sglang/vllm].sh`, then run `python3 run_throughput_exp.py`.
+To generate verl scripts (in ./nips25/) and sbatch scripts for slurm (in ./sbatch_scripts/), you could change the model, image, and working directory to paths in your own filesystem in `./nips25/[sglang/vllm]_base.sh` and `./sbatch_run_ray_base_[sglang/vllm].sh`, then run `python3 run_throughput_exp.py --dry-run` to generate all benchmark scripts.
 
 # Run benchmark directly with Ray cluster
 
@@ -18,4 +18,4 @@ If you have already setup a ray cluster based on verl docker image, you could di
 
 # Run benchmark with slurm + ray
 
-If you have a slurm cluster, you could automatically run all generated experiments as slurm jobs with `python3 run_throughput_exp.py`. You could also run a single benchmark experiment, by executing `sbatch sbatch_scripts/sbatch-xxxx.sh`. These sbatch scripts will automatically setup ray cluster on slurm nodes, run benchmark scripts, and clean up slurm jobs. 
+If you have a slurm cluster, you could automatically generate all benchmark scripts and run them as slurm jobs with `python3 run_throughput_exp.py`. You could also only generate scripts with `python3 run_throughput_exp.py --dry-run`, and then run single benchmark experiments by executing `sbatch sbatch_scripts/sbatch-xxxx.sh`. These sbatch scripts will automatically setup ray cluster on slurm nodes, run benchmark scripts, and clean up slurm jobs. 
